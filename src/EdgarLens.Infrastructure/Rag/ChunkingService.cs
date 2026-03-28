@@ -69,7 +69,7 @@ public class ChunkingService : IChunkingService
 
     private async Task<float[]?> GetEmbeddingAsync(string text)
     {
-        var request = new { model = "nomic-embed-text", prompt = text };
+        var request = new { model = _settings.EmbeddingModel, prompt = text };
         var response = await _httpClient.PostAsJsonAsync("/api/embeddings", request);
         if (!response.IsSuccessStatusCode) return null;
 

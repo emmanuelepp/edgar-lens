@@ -13,6 +13,7 @@ builder.Services.Configure<EdgarSettings>(
 builder.Services.AddHttpClient<IEdgarClient, EdgarClient>();
 builder.Services.AddHttpClient<IFilingDownloader, FilingDownloader>();
 builder.Services.AddHttpClient<IChunkingService, ChunkingService>();
+builder.Services.AddHttpClient<IRagService, RagService>();
 
 // Controllers
 builder.Services.AddControllers();

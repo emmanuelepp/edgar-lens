@@ -7,5 +7,7 @@ namespace EdgarLens.Core.Models
         public string TickersUrl { get; set; } = string.Empty;
         public string ArchivesBaseUrl { get; set; } = string.Empty;
         public string OllamaBaseUrl { get; set; } = string.Empty;
+        public string ChatModel { get; set; } = string.Empty;
+        public string EmbeddingModel { get; set; } = string.Empty;
     }
 }
