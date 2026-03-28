@@ -4,4 +4,7 @@
     <Project Path="src/EdgarLens.Core/EdgarLens.Core.csproj" />
     <Project Path="src/EdgarLens.Infrastructure/EdgarLens.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/EdgarLens.Tests/EdgarLens.Tests.csproj" />
+  </Folder>
 </Solution>
