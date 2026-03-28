@@ -10,6 +10,7 @@ builder.Services.Configure<EdgarSettings>(
 
 // HTTP Clients
 builder.Services.AddHttpClient<IEdgarClient, EdgarClient>();
+builder.Services.AddHttpClient<IFilingDownloader, FilingDownloader>();
 
 // Controllers
 builder.Services.AddControllers();

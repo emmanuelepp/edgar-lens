@@ -1,25 +1,30 @@
 using EdgarLens.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace EdgarLens.Api.Controllers
+namespace EdgarLens.Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class FilingsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class FilingsController : ControllerBase
+    private readonly IEdgarClient _edgarClient;
+    private readonly IFilingDownloader _filingDownloader;
+
+    public FilingsController(IEdgarClient edgarClient, IFilingDownloader filingDownloader)
     {
-        private readonly IEdgarClient _edgarClient;
+        _edgarClient = edgarClient;
+        _filingDownloader = filingDownloader;
+    }
 
-        public FilingsController(IEdgarClient edgarClient)
-        {
-            _edgarClient = edgarClient;
-        }
+    [HttpGet("{ticker}")]
+    public async Task<IActionResult> GetFilings(string ticker)
+    {
+        var filing = await _edgarClient.GetFilingsAsync(ticker);
+        if (filing is null) return NotFound();
 
-        [HttpGet("{ticker}")]
-        public async Task<IActionResult> GetFilings(string ticker)
-        {
-            var filing = await _edgarClient.GetFilingsAsync(ticker);
-            return filing is null ? NotFound() : Ok(filing);
-        }
+        var content = await _filingDownloader.DownloadAndSaveAsync(filing);
+        if (content is null) return StatusCode(500, "Failed to download filing");
 
+        return Ok(filing);
     }
 }
