@@ -61,6 +61,12 @@ POST /api/Query
 }
 ```
 
+## Demo
+
+![alt text](image-1.png)
+
+![alt text](image-2.png)
+
 ### MCP Server
 
 Connect any MCP-compatible client to `http://localhost:5097/mcp`.
