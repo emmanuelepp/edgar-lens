@@ -1,0 +1,6 @@
+@EdgarLens.Api_HostAddress = http://localhost:5097
+
+GET {{EdgarLens.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
