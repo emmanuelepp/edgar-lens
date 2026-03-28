@@ -1,7 +1,8 @@
-using EdgarLens.Core.Models;
 using EdgarLens.Core.Interfaces;
+using EdgarLens.Core.Models;
 using EdgarLens.Infrastructure.Edgar;
 using EdgarLens.Infrastructure.Rag;
+using EdgarLens.Api.Mcp;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// MCP
+builder.Services.AddMcpServer().WithHttpTransport(options => options.Stateless = true).WithTools<EdgarMcpServer>();
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -33,5 +37,6 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 app.MapControllers();
+app.MapMcp("/mcp");
 
 app.Run();
