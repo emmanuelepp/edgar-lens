@@ -8,13 +8,15 @@ namespace EdgarLens.Infrastructure.Edgar;
 public class EdgarClient : IEdgarClient
 {
     private readonly HttpClient _httpClient;
+    private readonly EdgarSettings _settings;
 
     public EdgarClient(HttpClient httpClient, IOptions<EdgarSettings> settings)
     {
+        _settings = settings.Value;
         _httpClient = httpClient;
-        _httpClient.BaseAddress = new Uri(settings.Value.BaseUrl);
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", settings.Value.UserAgent);
-        _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        _httpClient.BaseAddress = new Uri(_settings.BaseUrl);
+        _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", _settings.UserAgent);
+        _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
     }
 
     public async Task<Filing?> GetFilingsAsync(string ticker)
@@ -28,13 +30,22 @@ public class EdgarClient : IEdgarClient
 
     private async Task<string?> GetCikAsync(string ticker)
     {
-        var url = $"/submissions/CIK{ticker.ToUpper().PadLeft(10, '0')}.json";
-        var response = await _httpClient.GetAsync(url);
+        var response = await _httpClient.GetAsync(_settings.TickersUrl);
         if (!response.IsSuccessStatusCode) return null;
 
         var json = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(json);
-        return doc.RootElement.GetProperty("cik").GetRawText().Trim('"');
+
+        foreach (var company in doc.RootElement.EnumerateObject())
+        {
+            var tickerValue = company.Value.GetProperty("ticker").GetString();
+            if (string.Equals(tickerValue, ticker, StringComparison.OrdinalIgnoreCase))
+            {
+                return company.Value.GetProperty("cik_str").GetInt32().ToString();
+            }
+        }
+
+        return null;
     }
 
 
