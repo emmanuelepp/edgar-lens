@@ -4,5 +4,5 @@ namespace EdgarLens.Core.Interfaces;
 
 public interface IFilingDownloader
 {
-    Task<string?> DownloadAndSaveAsync(Filing filing);
+   Task<(string? Content, Guid? FilingId)> DownloadAndSaveAsync(Filing filing);
 }

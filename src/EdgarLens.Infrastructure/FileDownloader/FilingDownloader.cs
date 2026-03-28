@@ -21,24 +21,23 @@ public FilingDownloader(HttpClient httpClient, IOptions<EdgarSettings> settings,
     _connectionString = configuration.GetConnectionString("Default")!;
 }
 
-public async Task<string?> DownloadAndSaveAsync(Filing filing)
+public async Task<(string? Content, Guid? FilingId)> DownloadAndSaveAsync(Filing filing)
 {
     var indexResponse = await _httpClient.GetAsync(filing.DocumentUrl);
-    if (!indexResponse.IsSuccessStatusCode) return null;
+    if (!indexResponse.IsSuccessStatusCode) return (null, null);
 
     var indexHtml = await indexResponse.Content.ReadAsStringAsync();
-
     var documentUrl = ExtractMainDocumentUrl(indexHtml, filing);
-    if (documentUrl is null) return null;
+    if (documentUrl is null) return (null, null);
 
     var docResponse = await _httpClient.GetAsync(documentUrl);
-    if (!docResponse.IsSuccessStatusCode) return null;
+    if (!docResponse.IsSuccessStatusCode) return (null, null);
 
     var docHtml = await docResponse.Content.ReadAsStringAsync();
     var plainText = ExtractText(docHtml);
-    await SaveToDatabase(filing, plainText);
+    var filingId = await SaveToDatabase(filing, plainText);
 
-    return plainText;
+    return (plainText, filingId);
 }
 
 private string? ExtractMainDocumentUrl(string indexHtml, Filing filing)
@@ -83,25 +82,26 @@ private string? ExtractMainDocumentUrl(string indexHtml, Filing filing)
         return string.Join("\n", lines);
     }
 
-    private async Task SaveToDatabase(Filing filing, string content)
-    {
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
+private async Task<Guid> SaveToDatabase(Filing filing, string content)
+{
+    await using var conn = new NpgsqlConnection(_connectionString);
+    await conn.OpenAsync();
 
-        const string sql = """
-            INSERT INTO filings (ticker, company_name, cik, accession_number, filing_date, raw_content)
-            VALUES (@ticker, @companyName, @cik, @accessionNumber, @filingDate, @rawContent)
-            ON CONFLICT (accession_number) DO NOTHING
-        """;
+    const string sql = """
+        INSERT INTO filings (ticker, company_name, cik, accession_number, filing_date, raw_content)
+        VALUES (@ticker, @companyName, @cik, @accessionNumber, @filingDate, @rawContent)
+        ON CONFLICT (accession_number) DO UPDATE SET raw_content = EXCLUDED.raw_content
+        RETURNING id
+    """;
 
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("ticker", filing.Ticker);
-        cmd.Parameters.AddWithValue("companyName", filing.CompanyName);
-        cmd.Parameters.AddWithValue("cik", filing.Cik);
-        cmd.Parameters.AddWithValue("accessionNumber", filing.AccessionNumber);
-        cmd.Parameters.AddWithValue("filingDate", DateOnly.Parse(filing.FilingDate));
-        cmd.Parameters.AddWithValue("rawContent", content);
+    await using var cmd = new NpgsqlCommand(sql, conn);
+    cmd.Parameters.AddWithValue("ticker", filing.Ticker);
+    cmd.Parameters.AddWithValue("companyName", filing.CompanyName);
+    cmd.Parameters.AddWithValue("cik", filing.Cik);
+    cmd.Parameters.AddWithValue("accessionNumber", filing.AccessionNumber);
+    cmd.Parameters.AddWithValue("filingDate", DateOnly.Parse(filing.FilingDate));
+    cmd.Parameters.AddWithValue("rawContent", content);
 
-        await cmd.ExecuteNonQueryAsync();
-    }
+    return (Guid)(await cmd.ExecuteScalarAsync())!;
+}
 }

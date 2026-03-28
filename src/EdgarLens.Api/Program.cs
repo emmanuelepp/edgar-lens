@@ -1,6 +1,7 @@
 using EdgarLens.Core.Models;
 using EdgarLens.Core.Interfaces;
 using EdgarLens.Infrastructure.Edgar;
+using EdgarLens.Infrastructure.Rag;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ builder.Services.Configure<EdgarSettings>(
 // HTTP Clients
 builder.Services.AddHttpClient<IEdgarClient, EdgarClient>();
 builder.Services.AddHttpClient<IFilingDownloader, FilingDownloader>();
+builder.Services.AddHttpClient<IChunkingService, ChunkingService>();
 
 // Controllers
 builder.Services.AddControllers();
