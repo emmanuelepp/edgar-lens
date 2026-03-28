@@ -19,11 +19,9 @@ public class EdgarClient : IEdgarClient
 
     public async Task<Filing?> GetFilingsAsync(string ticker)
     {
-        // Step 1: Get CIK from ticker
         var cik = await GetCikAsync(ticker);
         if (cik is null) return null;
 
-        // Step 2: Get filing list
         var filing = await GetLatestFilingAsync(cik, ticker);
         return filing;
     }
